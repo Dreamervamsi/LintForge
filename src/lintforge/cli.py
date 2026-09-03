@@ -31,13 +31,44 @@ def check(
         raise typer.Exit(code=1)
 
     # Static Analysis
-    ruff_analysis_res = subprocess.run(
+    ref_analysis_res = subprocess.run(
             ["ruff", "check", "."],
-            cwd=str(original),
+            cwd=str(refracted),
             capture_output = True,
             text=True
     )
-    if ruff_analysis_res.returncode!=0 :
+    org_analysis_res = subprocess.run(
+        ["ruff","check","."],
+        cwd=str(original),
+        capture_output=True,
+        text=True
+    )
+
+    if org_analysis_res.returncode!=0 or ref_analysis_res.returncode!=0:
         print("Linting failed")
         raise typer.Exit(code=1)
-    print('[bold magenta]Linting Success[/bold magenta]')
+    
+    # Behavioural Test
+    org_test = subprocess.run(
+        ["pytest","."],
+        cwd=str(original),
+        capture_output=True,
+        text=True
+    )
+    
+    ref_test = subprocess.run(
+        ["pytest","."],
+        cwd=str(refracted),
+        capture_output=True,
+        text=True
+    )
+    
+    if org_test.returncode!=0 or ref_test.returncode!=0:
+        print("Testing failed")
+        raise typer.Exit(code=1)
+    
+    print("Original codebase testing result:")
+    print(org_test.stdout)
+    
+    print("Refracted codebase testing result:")
+    print(ref_test.stdout)
