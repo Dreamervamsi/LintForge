@@ -1,4 +1,3 @@
-import pytest
 from original.search.linear_search import linear_search
 
 

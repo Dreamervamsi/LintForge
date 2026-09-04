@@ -1,4 +1,3 @@
-import pytest
 from original import main
 
 

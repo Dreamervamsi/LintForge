@@ -15,8 +15,3 @@ def binary_search(arr, target):
             right = mid - 1
 
     return -1
-
-
-arr = [2, 5, 8, 12, 16, 23, 38, 45, 57]
-
-print(binary_search(arr, 23))
