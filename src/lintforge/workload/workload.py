@@ -7,14 +7,13 @@ import time
 class Workload:
     """Workload configuration for performance benchmarking."""
     
-    operation: Callable  # The function to benchmark
-    operation_name: str  # Name of the operation (e.g., "linear_search", "binary_search")
-    input_generator: Callable[[int], Any]  # Function that generates input based on size
-    sizes: List[int]  # List of input sizes to test
-    iterations: int  # Number of iterations per size
+    operation: Callable 
+    operation_name: str
+    input_generator: Callable[[int], Any]
+    sizes: List[int]
+    iterations: int
     
     def run(self) -> dict:
-        """Run the workload and return performance results."""
         results = {}
         
         for size in self.sizes:
@@ -23,7 +22,7 @@ class Workload:
             
             for _ in range(self.iterations):
                 start_time = time.perf_counter()
-                self.operation(input_data, size // 2)  # Search for middle element
+                self.operation(input_data, size // 2)
                 end_time = time.perf_counter()
                 times.append(end_time - start_time)
             
