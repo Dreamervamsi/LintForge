@@ -1,0 +1,7 @@
+name: "linear_search"
+module: "original.search.linear_search"
+function: "linear_search"
+input_generator: "generate_sorted_array"
+sizes: [100, 1000, 10000, 100000]
+iterations: 100
+description: "Linear search benchmark for original implementation"
