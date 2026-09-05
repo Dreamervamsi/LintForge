@@ -1,0 +1,7 @@
+name: "binary_search"
+module: "refracted.binary_search"
+function: "binary_search"
+input_generator: "generate_sorted_array"
+sizes: [100, 1000, 10000, 100000]
+iterations: 100
+description: "Binary search benchmark for refracted implementation"
