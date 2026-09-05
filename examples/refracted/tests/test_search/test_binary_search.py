@@ -8,7 +8,6 @@ def test_binary_search_found():
     assert binary_search(arr, 2) == 0
     assert binary_search(arr, 57) == 8
 
-
 def test_binary_search_not_found():
     """Test binary_search when target is not found in sorted array."""
     arr = [2, 5, 8, 12, 16, 23, 38, 45, 57]
