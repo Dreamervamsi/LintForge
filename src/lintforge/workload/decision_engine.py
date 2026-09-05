@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Dict
 
-
 class Decision(Enum):
     ACCEPT = "ACCEPT"
     REJECT = "REJECT"

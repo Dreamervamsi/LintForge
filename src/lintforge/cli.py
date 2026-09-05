@@ -1,98 +1,144 @@
-from .utils.cli_utils import get_folder_option
+from .utils.cli_utils import get_folder_option, run_ruff_check, run_pytest, parse_pytest_output, display_results, console
+from .workload import Workload, DecisionEngine, Decision
 import typer
-import subprocess
-from rich.console import Console
+import sys
+import importlib.util
+from pathlib import Path
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 from rich import box
 
 app = typer.Typer(help="LintForge - AI code refactoring validation tool")
-console = Console()
 
 @app.callback()
 def main():
     """LintForge - AI code refactoring validation tool"""
     pass
 
-def run_ruff_check(directory):
-    """Run ruff check and return result."""
-    result = subprocess.run(
-        ["ruff", "check", "."],
-        cwd=str(directory),
-        capture_output=True,
-        text=True
+def load_module_from_src(directory: Path, module_name: str):
+    """Load a Python module from the src directory of a project."""
+    src_dir = directory / "src"
+    module_path = src_dir / f"{module_name.replace('.', '/')}.py"
+    
+    if not module_path.exists():
+        return None
+    
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        return None
+    
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+def generate_sorted_array(size: int):
+    """Generate a sorted array of given size."""
+    return list(range(size))
+
+@app.command()
+def benchmark(
+    original: get_folder_option("--original", "Original codebase without any modifications"),
+    refracted: get_folder_option("--refracted", "Refracted codebase by AI"),
+    sizes: str = typer.Option("100,1000,10000", help="Comma-separated list of input sizes"),
+    iterations: int = typer.Option(100, help="Number of iterations per size")
+):
+    """Run performance benchmark comparing original and refracted code."""
+    if original is None or refracted is None:
+        console.print("[bold red]Error: Both --original and --refracted must be specified[/bold red]")
+        raise typer.Exit(code=1)
+    
+    size_list = [int(s.strip()) for s in sizes.split(",")]
+    
+    console.print("[bold cyan]Running performance benchmark...[/bold cyan]")
+    console.print()
+    
+    # Load modules
+    orig_module = load_module_from_src(original, "original.search.linear_search")
+    ref_module = load_module_from_src(refracted, "refracted.binary_search")
+    
+    if orig_module is None:
+        console.print("[bold red]Error: Could not load original module[/bold red]")
+        raise typer.Exit(code=1)
+    
+    if ref_module is None:
+        console.print("[bold red]Error: Could not load refracted module[/bold red]")
+        raise typer.Exit(code=1)
+    
+    # Create workloads
+    orig_workload = Workload(
+        operation=orig_module.linear_search,
+        operation_name="linear_search",
+        input_generator=generate_sorted_array,
+        sizes=size_list,
+        iterations=iterations
     )
-    return result
-
-def run_pytest(directory):
-    """Run pytest and return result."""
-    result = subprocess.run(
-        ["pytest", ".", "-v"],
-        cwd=str(directory),
-        capture_output=True,
-        text=True
+    
+    ref_workload = Workload(
+        operation=ref_module.binary_search,
+        operation_name="binary_search",
+        input_generator=generate_sorted_array,
+        sizes=size_list,
+        iterations=iterations
     )
-    return result
+    
+    # Run benchmarks
+    orig_results = orig_workload.run()
+    ref_results = ref_workload.run()
+    
+    # Compare results
+    engine = DecisionEngine()
+    comparison = engine.compare(orig_results, ref_results)
+    
+    # Display results
+    display_benchmark_results(comparison, orig_results, ref_results)
 
-def parse_pytest_output(output):
-    """Parse pytest output to extract test count."""
-    try:
-        # Searching for patterns like "8 passed in 0.10s" or "8 passed"
-        lines = output.split('\n')
-        for line in lines:
-            if 'passed' in line.lower():
-                # Extract the number before "passed"
-                parts = line.split()
-                for i, part in enumerate(parts):
-                    if 'passed' in part.lower():
-                        try:
-                            count = int(parts[i-1])
-                            return count
-                        except (ValueError, IndexError):
-                            continue
-        return 0
-    except Exception:
-        return 0
-
-def display_results(original_results, refracted_results):
-    title = Text("Lint Forge", style="bold blue")
+def display_benchmark_results(comparison, orig_results, ref_results):
+    """Display benchmark results using rich formatting."""
+    title = Text("Performance Benchmark", style="bold blue")
     panel = Panel(title, box=box.DOUBLE, padding=(1, 2))
     console.print(panel)
     console.print()
     
+    # Decision panel
+    decision_color = {
+        Decision.ACCEPT: "green",
+        Decision.REJECT: "red",
+        Decision.REVIEW: "yellow"
+    }
+    
+    decision_text = Text(f"Decision: {comparison['decision'].value}", style=f"bold {decision_color[comparison['decision']]}")
+    decision_panel = Panel(decision_text, box=box.ROUNDED)
+    console.print(decision_panel)
+    console.print()
+    
+    # Detailed results table
     table = Table(show_header=True, header_style="bold magenta", box=box.ROUNDED)
-    table.add_column("Category", style="cyan", width=20)
-    table.add_column("Original", style="green", width=20)
-    table.add_column("Refracted", style="green", width=20)
+    table.add_column("Size", style="cyan", width=10)
+    table.add_column("Original (s)", style="green", width=15)
+    table.add_column("Refracted (s)", style="green", width=15)
+    table.add_column("Speedup", style="yellow", width=10)
+    table.add_column("Decision", style="cyan", width=10)
     
-    # Static Analysis Results
-    org_ruff = "✓ PASS" if original_results['ruff'].returncode == 0 else "✗ FAIL"
-    ref_ruff = "✓ PASS" if refracted_results['ruff'].returncode == 0 else "✗ FAIL"
-    table.add_row("Ruff", org_ruff, ref_ruff)
-    
-    # Pytest Results
-    org_tests = original_results['pytest_count']
-    ref_tests = refracted_results['pytest_count']
-    org_test_status = f"✓ {org_tests}/{org_tests}" if original_results['pytest'].returncode == 0 else f"✗ {org_tests} failed"
-    ref_test_status = f"✓ {ref_tests}/{ref_tests}" if refracted_results['pytest'].returncode == 0 else f"✗ {ref_tests} failed"
-    table.add_row("pytest", org_test_status, ref_test_status)
+    for detail in comparison["details"]:
+        size = detail["size"]
+        orig_time = f"{detail['original_avg']:.6f}"
+        ref_time = f"{detail['refracted_avg']:.6f}"
+        speedup = f"{detail['speedup']:.2f}x"
+        decision = detail["decision"].value
+        decision_style = decision_color[detail["decision"]]
+        
+        table.add_row(str(size), orig_time, ref_time, speedup, f"[{decision_style}]{decision}[/{decision_style}]")
     
     console.print(table)
     console.print()
     
-    # Display errors if any
-    if original_results['ruff'].returncode != 0:
-        console.print(Panel(original_results['ruff'].stdout, title="[bold red]Original Ruff Errors[/bold red]", box=box.ROUNDED))
-    
-    if refracted_results['ruff'].returncode != 0:
-        console.print(Panel(refracted_results['ruff'].stdout, title="[bold red]Refracted Ruff Errors[/bold red]", box=box.ROUNDED))
-    
-    if original_results['pytest'].returncode != 0:
-        console.print(Panel(original_results['pytest'].stdout, title="[bold red]Original Test Errors[/bold red]", box=box.ROUNDED))
-    
-    if refracted_results['pytest'].returncode != 0:
-        console.print(Panel(refracted_results['pytest'].stdout, title="[bold red]Refracted Test Errors[/bold red]", box=box.ROUNDED))
+    # Exit with appropriate code
+    if comparison["decision"] == Decision.REJECT:
+        raise typer.Exit(code=1)
+    elif comparison["decision"] == Decision.REVIEW:
+        raise typer.Exit(code=2)
 
 @app.command()
 def check(
