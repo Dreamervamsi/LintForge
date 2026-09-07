@@ -1,13 +1,15 @@
-from .utils.cli_utils import get_folder_option, run_ruff_check, run_pytest, parse_pytest_output, display_results, console
-from .workload import Workload, DecisionEngine, Decision, BenchmarkLoader, BenchmarkConfig
-import typer
-import sys
 import importlib.util
+import sys
 from pathlib import Path
+
+from rich import box
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich import box
+import typer
+
+from .utils.cli_utils import console, display_results, get_folder_option, parse_pytest_output, run_pytest, run_ruff_check
+from .workload import BenchmarkConfig, BenchmarkLoader, Decision, DecisionEngine, Workload
 
 app = typer.Typer(help="LintForge - AI code refactoring validation tool")
 
