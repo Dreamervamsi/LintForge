@@ -2,21 +2,28 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import typer
+
 from rich import box
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-import typer
 
-from .utils.cli_utils import console, display_results, get_folder_option, parse_pytest_output, run_pytest, run_ruff_check
-from .workload import BenchmarkConfig, BenchmarkLoader, Decision, DecisionEngine, Workload
+from .utils.cli_utils import (
+    console,
+    display_results,
+    get_folder_option,
+    parse_pytest_output,
+    run_pytest,
+    run_ruff_check,
+)
+from .workload import BenchmarkLoader, Decision, DecisionEngine, Workload
 
 app = typer.Typer(help="LintForge - AI code refactoring validation tool")
 
 @app.callback()
 def main():
     """LintForge - AI code refactoring validation tool"""
-    pass
 
 def load_module_from_src(directory: Path, module_name: str):
     """Load a Python module from the src directory of a project."""

@@ -1,6 +1,7 @@
-from dataclasses import dataclass
-from typing import Any, Callable, List
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -10,7 +11,7 @@ class Workload:
     operation: Callable 
     operation_name: str
     input_generator: Callable[[int], Any]
-    sizes: List[int]
+    sizes: list[int]
     iterations: int
     
     def run(self) -> dict:

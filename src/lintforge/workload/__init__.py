@@ -1,5 +1,5 @@
+from .benchmark_loader import BenchmarkConfig, BenchmarkLoader
+from .decision_engine import Decision, DecisionEngine
 from .workload import Workload
-from .decision_engine import DecisionEngine, Decision
-from .benchmark_loader import BenchmarkLoader, BenchmarkConfig
 
-__all__ = ["Workload", "DecisionEngine", "Decision", "BenchmarkLoader", "BenchmarkConfig"]
+__all__ = ["BenchmarkConfig", "BenchmarkLoader", "Decision", "DecisionEngine", "Workload"]

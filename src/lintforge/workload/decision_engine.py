@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Dict
 
 class Decision(Enum):
     ACCEPT = "ACCEPT"
@@ -12,7 +11,7 @@ class DecisionEngine:
         self.speedup_threshold = speedup_threshold
         self.slowdown_threshold = slowdown_threshold
     
-    def compare(self, original_results: Dict, refracted_results: Dict) -> Dict:
+    def compare(self, original_results: dict, refracted_results: dict) -> dict:
         comparison = {
             "decision": None,
             "details": []

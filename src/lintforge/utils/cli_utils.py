@@ -1,12 +1,14 @@
-from typing import Annotated
-from pathlib import Path
-import typer
 import subprocess
+from pathlib import Path
+from typing import Annotated
+
+import typer
+
+from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich import box
 
 console = Console()
 
@@ -29,7 +31,8 @@ def run_ruff_check(directory):
         ["ruff", "check", "."],
         cwd=str(directory),
         capture_output=True,
-        text=True
+        text=True,
+        check=False
     )
     return result
     
@@ -40,7 +43,8 @@ def run_pytest(directory):
         ["pytest", ".", "-v"],
         cwd=str(directory),
         capture_output=True,
-        text=True
+        text=True,
+        check=False
     )
     return result
 
@@ -62,7 +66,7 @@ def parse_pytest_output(output):
                         except (ValueError, IndexError):
                             continue
         return 0
-    except Exception:
+    except (ValueError, IndexError):
         return 0
 
 # disply results

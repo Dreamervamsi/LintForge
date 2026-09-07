@@ -1,7 +1,7 @@
-import yaml
-from pathlib import Path
-from typing import Dict
 from dataclasses import dataclass
+from pathlib import Path
+
+import yaml
 
 
 @dataclass
@@ -39,7 +39,7 @@ class BenchmarkLoader:
             description=data.get('description', '')
         )
     
-    def load_all_configs(self) -> Dict[str, BenchmarkConfig]:
+    def load_all_configs(self) -> dict[str, BenchmarkConfig]:
         configs = {}
         
         for config_file in self.benchmark_dir.glob("*.yaml"):
