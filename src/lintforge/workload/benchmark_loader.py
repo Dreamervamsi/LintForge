@@ -1,12 +1,11 @@
 import yaml
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict
 from dataclasses import dataclass
 
 
 @dataclass
 class BenchmarkConfig:
-    """Benchmark configuration loaded from YAML file."""
     name: str
     module: str
     function: str
@@ -16,9 +15,7 @@ class BenchmarkConfig:
     description: str
 
 
-class BenchmarkLoader:
-    """Load benchmark configurations from YAML files."""
-    
+class BenchmarkLoader:    
     def __init__(self, benchmark_dir: Path):
       
         self.benchmark_dir = benchmark_dir
